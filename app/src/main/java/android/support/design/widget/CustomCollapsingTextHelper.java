@@ -541,56 +541,87 @@ public final class CustomCollapsingTextHelper {
         final int saveCount = canvas.save();
 
         if (mTextToDraw != null && mDrawTitle) {
-            float x = mCurrentDrawX;
-            float y = mCurrentDrawY;
-            float subY = mCurrentSubY;
-            final boolean drawTexture = mUseTexture && mExpandedTitleTexture != null;
-
-            final float ascent;
-            final float descent;
-            if (drawTexture) {
-                ascent = mTextureAscent * mScale;
-                descent = mTextureDescent * mScale;
-            } else {
-                ascent = mTitlePaint.ascent() * mScale;
-                descent = mTitlePaint.descent() * mScale;
-            }
-
-            if (DEBUG_DRAW) {
-                // Just a debug tool, which drawn a magenta rect in the text bounds
-                canvas.drawRect(mCurrentBounds.left, y + ascent, mCurrentBounds.right, y + descent,
-                        DEBUG_DRAW_PAINT);
-            }
-
-            if (drawTexture) {
-                y += ascent;
-            }
-
-            //region modification
-            final int saveCountSub = canvas.save();
-            if (mSub != null) {
-                if (mSubScale != 1f) {
-                    canvas.scale(mSubScale, mSubScale, x, subY);
-                }
-                canvas.drawText(mSub, 0, mSub.length(), x, subY, mSubPaint);
-                canvas.restoreToCount(saveCountSub);
-            }
-            //endregion
-
-            if (mScale != 1f) {
-                canvas.scale(mScale, mScale, x, y);
-            }
-
-            if (drawTexture) {
-                // If we should use a texture, draw it instead of text
-                canvas.drawBitmap(mExpandedTitleTexture, x, y, mTexturePaint);
-            } else {
-                canvas.drawText(mTextToDraw, 0, mTextToDraw.length(), x, y, mTitlePaint);
-            }
+            drawTitle(canvas);
         }
 
         canvas.restoreToCount(saveCount);
     }
+
+    private void drawTitle(Canvas canvas) {
+        float x = mCurrentDrawX;
+        float y = mCurrentDrawY;
+        boolean drawTexture = shouldDrawTexture();
+
+        drawDebugInfo(canvas, x, y);
+
+        y = adjustYForTexture(drawTexture, y);
+
+        drawText(canvas, x, y, drawTexture);
+        drawSubTextIfNeeded(canvas, x, mCurrentSubY);
+    }
+
+    private boolean shouldDrawTexture() {
+        return mUseTexture && mExpandedTitleTexture != null;
+    }
+
+    private void drawDebugInfo(Canvas canvas, float x, float y) {
+        if (DEBUG_DRAW) {
+            float ascent = computeAscent(shouldDrawTexture());
+            float descent = computeDescent(shouldDrawTexture());
+            canvas.drawRect(mCurrentBounds.left, y + ascent, mCurrentBounds.right, y + descent, DEBUG_DRAW_PAINT);
+        }
+    }
+
+    private float adjustYForTexture(boolean drawTexture, float y) {
+        if (drawTexture) {
+            float ascent = computeAscent(drawTexture);
+            return y + ascent;
+        }
+        return y;
+    }
+
+    private void drawText(Canvas canvas, float x, float y, boolean drawTexture) {
+        if (drawTexture) {
+            canvas.drawBitmap(mExpandedTitleTexture, x, y, mTexturePaint);
+        } else {
+            canvas.drawText(mTextToDraw, 0, mTextToDraw.length(), x, y, mTitlePaint);
+        }
+    }
+
+    private float computeAscent(boolean drawTexture) {
+        return drawTexture ? mTextureAscent * mScale : mTitlePaint.ascent() * mScale;
+    }
+
+    private float computeDescent(boolean drawTexture) {
+        return drawTexture ? mTextureDescent * mScale : mTitlePaint.descent() * mScale;
+    }
+
+
+    private float adjustYForTexture(boolean drawTexture, float y) {
+        if (drawTexture) {
+            float ascent = computeAscent(drawTexture);
+            return y + ascent;
+        }
+        return y;
+    }
+
+    private void drawSubTextIfNeeded(Canvas canvas, float x, float subY) {
+        if (mSub != null) {
+            final int saveCountSub = canvas.save();
+            if (mSubScale != 1f) {
+                canvas.scale(mSubScale, mSubScale, x, subY);
+            }
+            canvas.drawText(mSub, 0, mSub.length(), x, subY, mSubPaint);
+            canvas.restoreToCount(saveCountSub);
+        }
+    }
+
+    private void scaleCanvasIfNeeded(Canvas canvas, float x, float y) {
+        if (mScale != 1f) {
+            canvas.scale(mScale, mScale, x, y);
+        }
+    }
+
 
     private boolean calculateIsRtl(CharSequence text) {
         final boolean defaultIsRtl = ViewCompat.getLayoutDirection(mView)

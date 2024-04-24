@@ -44,10 +44,7 @@ import com.simplecity.amp_library.R;
 @SuppressWarnings("RestrictedApi")
 public final class CustomCollapsingTextHelper {
 
-    // Pre-JB-MR2 doesn't support HW accelerated canvas scaled text so we will workaround it
-    // by using our own texture
     private static final boolean USE_SCALING_TEXTURE = Build.VERSION.SDK_INT < 18;
-
     private static final boolean DEBUG_DRAW = false;
     private static final Paint DEBUG_DRAW_PAINT;
 
@@ -96,10 +93,14 @@ public final class CustomCollapsingTextHelper {
     private Interpolator mPositionInterpolator;
     private Interpolator mTextSizeInterpolator;
 
-    private float mCollapsedShadowRadius, mCollapsedShadowDx, mCollapsedShadowDy;
+    private float mCollapsedShadowRadius;
+    private float mCollapsedShadowDx;
+    private float mCollapsedShadowDy;
     private int mCollapsedShadowColor;
 
-    private float mExpandedShadowRadius, mExpandedShadowDx, mExpandedShadowDy;
+    private float mExpandedShadowRadius;
+    private float mExpandedShadowDx;
+    private float mExpandedShadowDy;
     private int mExpandedShadowColor;
 
     private CharSequence mSub;
@@ -146,8 +147,7 @@ public final class CustomCollapsingTextHelper {
         return Color.argb((int) a, (int) r, (int) g, (int) b);
     }
 
-    private static float lerp(float startValue, float endValue, float fraction,
-                              Interpolator interpolator) {
+    private static float lerp(float startValue, float endValue, float fraction, Interpolator interpolator) {
         if (interpolator != null) {
             fraction = interpolator.getInterpolation(fraction);
         }
@@ -156,6 +156,11 @@ public final class CustomCollapsingTextHelper {
 
     private static boolean rectEquals(Rect r, int left, int top, int right, int bottom) {
         return !(r.left != left || r.top != top || r.right != right || r.bottom != bottom);
+    }
+    private static class FontFamilyTypefaceException extends RuntimeException {
+        FontFamilyTypefaceException(String message) {
+            super(message);
+        }
     }
 
     public void setTextSizeInterpolator(Interpolator interpolator) {

@@ -589,10 +589,6 @@ public final class CustomCollapsingTextHelper {
         return drawTexture ? mTextureAscent * mScale : mTitlePaint.ascent() * mScale;
     }
 
-    private float computeDescent(boolean drawTexture) {
-        return drawTexture ? mTextureDescent * mScale : mTitlePaint.descent() * mScale;
-    }
-
 
     private float adjustYForTexture(boolean drawTexture, float y) {
         if (drawTexture) {
@@ -657,12 +653,11 @@ public final class CustomCollapsingTextHelper {
         updateTextIfNeeded(newTextSize, availableWidth);
     }
 
-    private float calculateAvailableWidth(float textSize) {
+    private float calculateAvailableWidth() {
         final float collapsedWidth = mCollapsedBounds.width();
         final float expandedWidth = mExpandedBounds.width();
         final float textSizeRatio = mCollapsedTextSize / mExpandedTextSize;
         final float scaledDownWidth = expandedWidth * textSizeRatio;
-
         if (textSizeRatio * expandedWidth > collapsedWidth) {
             return Math.min(collapsedWidth / textSizeRatio, expandedWidth);
         }

@@ -419,7 +419,7 @@ public class CustomCollapsingToolbarLayout extends FrameLayout {
         }
     }
 
-    private void setupCollapsingTitle(boolean changed, int left, int right, int top, int bottom) {
+    private void setupCollapsingTitle( int left, int right, int top, int bottom) {
         mDrawCollapsingTitle = ViewCompat.isAttachedToWindow(mDummyView) && mDummyView.getVisibility() == VISIBLE;
 
         if (mDrawCollapsingTitle) {
@@ -445,7 +445,7 @@ public class CustomCollapsingToolbarLayout extends FrameLayout {
         }
     }
 
-    private int calculateCollapsedBounds(boolean isRtl, int maxOffset) {
+    private int calculateCollapsedBounds(boolean isRtl) {
         return mTmpRect.left + (isRtl ? mToolbar.getTitleMarginEnd() : mToolbar.getTitleMarginStart());
     }
 

@@ -490,17 +490,13 @@ public class MusicService extends MediaBrowserServiceCompat {
     private final BroadcastReceiver intentReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, final Intent intent) {
-
             String action = intent.getAction();
-
             String command = intent.getStringExtra(MediaButtonCommand.CMD_NAME);
             if (command != null) {
                 action = commandToAction(command);
                 widgetManager.processCommand(MusicService.this, intent, command);
             }
-
             if (action != null) {
-                analyticsManager.dropBreadcrumb(TAG, String.format("onReceive() Action: %s, Command: %s", action, command));
                 switch (action) {
                     case ServiceCommand.NEXT:
                         gotoNext(true);

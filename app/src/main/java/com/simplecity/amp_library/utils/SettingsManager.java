@@ -17,9 +17,17 @@ public class SettingsManager extends BaseSettingsManager {
 
     private static final String TAG = "SettingsManager";
 
+    // Make KEY_PREF_CHANGELOG public and final
+    public static final String KEY_PREF_CHANGELOG = "pref_changelog";
+
     @Inject
     public SettingsManager(@NotNull SharedPreferences sharedPreferences) {
         super(sharedPreferences);
+    }
+
+    // Provide a public getter method to access the value safely from other parts of the code
+    public static String getKeyPrefChangelog() {
+        return KEY_PREF_CHANGELOG;
     }
 
     // Support

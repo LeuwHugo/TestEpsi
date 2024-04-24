@@ -66,8 +66,15 @@ public class MultiFetcher implements DataFetcher<InputStream> {
                 case ArtworkProvider.Type.REMOTE:
                     dataFetcher = new RemoteFetcher(artworkProvider);
                     break;
+                default:
+                    // Handle unexpected or future additional types
+                    // For example, log a warning or set dataFetcher to a default value
+                    Log.w(TAG, "Unknown ArtworkProvider type: " + userSelectedArtwork.type);
+                    dataFetcher = new DefaultFetcher();
+                    break;
             }
             inputStream = loadData(dataFetcher, priority);
+
         }
 
         //No user selected artwork. Check local then remote sources, according to user's preferences.

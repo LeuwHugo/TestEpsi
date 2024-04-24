@@ -25,6 +25,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class MediaManager {
 
@@ -86,6 +87,9 @@ public class MediaManager {
                         songs -> shuffleAll(songs, onEmpty),
                         e -> LogUtils.logException(TAG, "Shuffle all error", e));
     }
+
+    // Inside your method
+    int randomIndex = ThreadLocalRandom.current().nextInt(songs.size());
 
     private Random random = new Random();
 

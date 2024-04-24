@@ -22,6 +22,6 @@ public class ColorSetResource implements Resource<ColorSet> {
 
     @Override
     public void recycle() {
-
+        throw new UnsupportedOperationException("Recycling is not supported in this context.");
     }
 }

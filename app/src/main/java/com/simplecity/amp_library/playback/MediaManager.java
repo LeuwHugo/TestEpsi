@@ -89,7 +89,9 @@ public class MediaManager {
     }
 
     // Inside your method
-    int randomIndex = ThreadLocalRandom.current().nextInt(songs.size());
+    synchronized(songs) {
+        int randomIndex = ThreadLocalRandom.current().nextInt(songs.size());
+    }
 
     private Random random = new Random();
 

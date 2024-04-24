@@ -26,7 +26,20 @@ import static java.lang.StrictMath.round;
 import static java.lang.StrictMath.sin;
 import static java.lang.StrictMath.toRadians;
 import static java.util.concurrent.TimeUnit.SECONDS;
+public class AlphaValueGenerator {
+    private static final int MIN_ALPHA = 50;  // Example values
+    private static final int MAX_ALPHA = 200;
+    private Random snowRng = new Random();
 
+    public int generateAlpha() {
+        int range = MAX_ALPHA - MIN_ALPHA + 1;  // Calculate the range between MIN_ALPHA and MAX_ALPHA
+        return snowRng.nextInt(range) + MIN_ALPHA;  // Generate and return the alpha value
+    }
+}
+// Usage
+AlphaValueGenerator generator = new AlphaValueGenerator();
+int alpha = generator.generateAlpha();
+System.out.println("Generated Alpha: " + alpha);
 public class SnowfallView extends View {
 
     private static final String TAG = SnowfallView.class.getSimpleName();

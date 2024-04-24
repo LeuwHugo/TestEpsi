@@ -310,7 +310,8 @@ public final class CustomCollapsingTextHelper {
                 return Typeface.create(family, Typeface.NORMAL);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Unable to read font family typeface: " + resId);
+            // Vous pouvez inclure plus de détails ou le message de l'exception originale si nécessaire
+            throw new TypefaceReadException("Unable to read font family typeface for resource ID " + resId);
         } finally {
             a.recycle();
         }
@@ -499,7 +500,6 @@ public final class CustomCollapsingTextHelper {
         float textHeight = mTitlePaint.descent() - mTitlePaint.ascent();
         if (!TextUtils.isEmpty(mSub)) {
             float subHeight = mSubPaint.descent() - mSubPaint.ascent();
-            float subOffset = (subHeight / 2) - mSubPaint.descent();
             float offset = ((mCollapsedBounds.height() - (textHeight + subHeight)) / 3);
 
             mCollapsedDrawY = mCollapsedBounds.top + offset - mTitlePaint.ascent();
@@ -569,14 +569,6 @@ public final class CustomCollapsingTextHelper {
         return mUseTexture && mExpandedTitleTexture != null;
     }
 
-    private void drawDebugInfo(Canvas canvas, float x, float y) {
-        if (DEBUG_DRAW) {
-            float ascent = computeAscent(shouldDrawTexture());
-            float descent = computeDescent(shouldDrawTexture());
-            canvas.drawRect(mCurrentBounds.left, y + ascent, mCurrentBounds.right, y + descent, DEBUG_DRAW_PAINT);
-        }
-    }
-
     private float adjustYForTexture(boolean drawTexture, float y) {
         if (drawTexture) {
             float ascent = computeAscent(drawTexture);
@@ -621,19 +613,17 @@ public final class CustomCollapsingTextHelper {
         }
     }
 
-    private void scaleCanvasIfNeeded(Canvas canvas, float x, float y) {
-        if (mScale != 1f) {
-            canvas.scale(mScale, mScale, x, y);
-        }
-    }
-
-
     private boolean calculateIsRtl(CharSequence text) {
         final boolean defaultIsRtl = ViewCompat.getLayoutDirection(mView)
                 == ViewCompat.LAYOUT_DIRECTION_RTL;
         return (defaultIsRtl
                 ? TextDirectionHeuristicsCompat.FIRSTSTRONG_RTL
                 : TextDirectionHeuristicsCompat.FIRSTSTRONG_LTR).isRtl(text, 0, text.length());
+    }
+    public class TypefaceReadException extends RuntimeException {
+        public TypefaceReadException(String message) {
+            super(message);
+        }
     }
 
     private void setInterpolatedTextSize(float textSize) {
@@ -661,72 +651,61 @@ public final class CustomCollapsingTextHelper {
     private void calculateUsingTextSize(final float textSize) {
         if (mText == null) return;
 
+        final float availableWidth = calculateAvailableWidth(textSize);
+        final float newTextSize = determineNewTextSize(textSize, availableWidth);
+
+        updateTextIfNeeded(newTextSize, availableWidth);
+    }
+
+    private float calculateAvailableWidth(float textSize) {
         final float collapsedWidth = mCollapsedBounds.width();
         final float expandedWidth = mExpandedBounds.width();
+        final float textSizeRatio = mCollapsedTextSize / mExpandedTextSize;
+        final float scaledDownWidth = expandedWidth * textSizeRatio;
 
-        final float availableWidth;
-        final float newTextSize;
-        boolean updateDrawText = false;
+        if (textSizeRatio * expandedWidth > collapsedWidth) {
+            return Math.min(collapsedWidth / textSizeRatio, expandedWidth);
+        }
+        return expandedWidth;
+    }
 
-        if (isClose(textSize, mCollapsedTextSize)) {
-            newTextSize = mCollapsedTextSize;
+    private float determineNewTextSize(float textSize, float availableWidth) {
+        boolean isCloseToCollapsed = isClose(textSize, mCollapsedTextSize);
+        boolean isCloseToExpanded = isClose(textSize, mExpandedTextSize);
+
+        if (isCloseToCollapsed) {
             mScale = 1f;
-            if (mCurrentTypeface != mCollapsedTypeface) {
-                mCurrentTypeface = mCollapsedTypeface;
-                updateDrawText = true;
-            }
-            availableWidth = collapsedWidth;
+            mCurrentTypeface = mCollapsedTypeface;
+            return mCollapsedTextSize;
+        } else if (isCloseToExpanded) {
+            mScale = 1f;
+            mCurrentTypeface = mExpandedTypeface;
+            return mExpandedTextSize;
         } else {
-            newTextSize = mExpandedTextSize;
-            if (mCurrentTypeface != mExpandedTypeface) {
-                mCurrentTypeface = mExpandedTypeface;
-                updateDrawText = true;
-            }
-            if (isClose(textSize, mExpandedTextSize)) {
-                // If we're close to the expanded text size, snap to it and use a scale of 1
-                mScale = 1f;
-            } else {
-                // Else, we'll scale down from the expanded text size
-                mScale = textSize / mExpandedTextSize;
-            }
-
-            final float textSizeRatio = mCollapsedTextSize / mExpandedTextSize;
-            // This is the size of the expanded bounds when it is scaled to match the
-            // collapsed text size
-            final float scaledDownWidth = expandedWidth * textSizeRatio;
-
-            if (scaledDownWidth > collapsedWidth) {
-                // If the scaled down size is larger than the actual collapsed width, we need to
-                // cap the available width so that when the expanded text scales down, it matches
-                // the collapsed width
-                availableWidth = Math.min(collapsedWidth / textSizeRatio, expandedWidth);
-            } else {
-                // Otherwise we'll just use the expanded width
-                availableWidth = expandedWidth;
-            }
+            mScale = textSize / mExpandedTextSize;
+            mCurrentTypeface = mExpandedTypeface;
+            return textSize;
         }
+    }
 
-        if (availableWidth > 0) {
-            updateDrawText = (mCurrentTextSize != newTextSize) || mBoundsChanged || updateDrawText;
-            mCurrentTextSize = newTextSize;
-            mBoundsChanged = false;
-        }
+    private void updateTextIfNeeded(float newTextSize, float availableWidth) {
+        boolean updateDrawText = (mCurrentTextSize != newTextSize) || mBoundsChanged || (mCurrentTypeface != mCollapsedTypeface && mCurrentTypeface != mExpandedTypeface);
+        mCurrentTextSize = newTextSize;
+        mBoundsChanged = false;
 
-        if (mTextToDraw == null || updateDrawText) {
+        if (updateDrawText) {
             mTitlePaint.setTextSize(mCurrentTextSize);
             mTitlePaint.setTypeface(mCurrentTypeface);
-            // Use linear text scaling if we're scaling the canvas
             mTitlePaint.setLinearText(mScale != 1f);
 
-            // If we don't currently have text to draw, or the text size has changed, ellipsize...
-            final CharSequence title = TextUtils.ellipsize(mText, mTitlePaint,
-                    availableWidth, TextUtils.TruncateAt.END);
+            CharSequence title = TextUtils.ellipsize(mText, mTitlePaint, availableWidth, TextUtils.TruncateAt.END);
             if (!TextUtils.equals(title, mTextToDraw)) {
                 mTextToDraw = title;
                 mIsRtl = calculateIsRtl(mTextToDraw);
             }
         }
     }
+
 
     private void calculateUsingSubSize(final float subSize) {
         if (mSub == null) return;

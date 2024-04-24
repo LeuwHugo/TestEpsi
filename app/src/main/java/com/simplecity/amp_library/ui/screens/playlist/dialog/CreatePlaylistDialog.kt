@@ -60,7 +60,13 @@ class CreatePlaylistDialog : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val songsToAdd: List<Song>? = arguments?.getSerializable(ARG_SONGS) as? List<Song>
+        val serializable = arguments?.getSerializable(ARG_SONGS)
+        val songsToAdd = if (serializable is List<*> && serializable.all { it is Song }) {
+            @Suppress("UNCHECKED_CAST")
+            serializable as List<Song>
+        } else {
+            null
+        }
 
         @SuppressLint("InflateParams")
         val customView = LayoutInflater.from(context).inflate(R.layout.dialog_playlist, null)

@@ -282,19 +282,18 @@ public class DrawerParent implements Parent<DrawerChild> {
         @Override
         public void onExpansionToggled(boolean expanded) {
             super.onExpansionToggled(expanded);
-
             if (objectAnimator != null) {
                 objectAnimator.cancel();
             }
-
-            objectAnimator = ObjectAnimator.ofFloat(expandableIcon, View.ROTATION,
-                    expanded ? expandableIcon.getRotation() : expandableIcon.getRotation(),
-                    expanded ? 0f : -180f);
+            float startRotation = expanded ? expandableIcon.getRotation() : -180f;
+            float endRotation = expanded ? 0f : -180f;
+            objectAnimator = ObjectAnimator.ofFloat(expandableIcon, View.ROTATION, startRotation, endRotation);
             objectAnimator.setDuration(250);
             objectAnimator.setStartDelay(expanded ? 100 : 0);
             objectAnimator.setInterpolator(new DecelerateInterpolator(1.2f));
             objectAnimator.start();
         }
+
 
         @Override
         public void onClick(View v) {

@@ -65,9 +65,12 @@ public class LetterDrawable extends Drawable {
      * tile background color
      */
     private int pickColor(String key) {
-        // String.hashCode() is not supposed to change across java versions, so
-        // this should guarantee the same key always maps to the same color
-        final int color = Math.abs(key.hashCode()) % mColors.length();
-        return mColors.getColor(color, Color.BLACK);
+        int hash = key.hashCode();
+        // Using bitwise AND with length-1 instead of modulus to avoid negative index
+        // Ensure mColors.length() is a power of two for this to work correctly
+        // Otherwise, use (Math.abs(hash) % mColors.length())
+        final int index = (hash & 0x7FFFFFFF) % mColors.length(); // Safely wraps index within the array bounds
+        return mColors.getColor(index, Color.BLACK);
     }
+
 }

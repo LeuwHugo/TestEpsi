@@ -119,10 +119,16 @@ public class ArtworkDownloadService extends Service {
                                     .downloadOnly(SimpleTarget.SIZE_ORIGINAL, SimpleTarget.SIZE_ORIGINAL);
                             try {
                                 futureTarget.get(30, TimeUnit.SECONDS);
-                            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                                Log.e(TAG, "Error downloading artworkProvider: " + e);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt(); // Re-interrupt the thread
+                                Log.e(TAG, "Thread was interrupted while downloading artwork: " + e);
+                                return null; // Or handle according to your method's contract
+                            } catch (ExecutionException | TimeoutException e) {
+                                Log.e(TAG, "Error downloading artwork: " + e);
+                                return null; // Or handle according to your method's contract
                             }
                             Glide.clear(futureTarget);
+                            return artwork;
                             return artwork;
                         }))
                 .subscribeOn(Schedulers.computation())
